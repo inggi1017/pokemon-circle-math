@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>寶可夢道館挑戰賽：圓心角與圓周角</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background-color: #0f172a;
+    user-select: none;
+  }
+  .gym-bg {
+    background: radial-gradient(circle at 50% 30%, #1e3a8a 0%, #0f172a 70%, #020617 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .gym-grid {
+    background-image: 
+      linear-gradient(rgba(56, 189, 248, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56, 189, 248, 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .pokeball-bg {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    border: 24px solid rgba(255, 255, 255, 0.04);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .pokeball-bg::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -24px;
+    right: -24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-50%);
+  }
+  .pokeball-bg::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 24px solid rgba(255, 255, 255, 0.04);
+    background: #0f172a;
+    transform: translate(-50%, -50%);
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+  }
+  .animate-shake {
+    animation: shake 0.4s ease-in-out;
+  }
+  @keyframes flashHit {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(2.5) drop-shadow(0 0 15px #ef4444); }
+  }
+  .animate-hit {
+    animation: flashHit 0.4s ease-in-out;
+  }
+  .battle-box {
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(8px);
+    border: 3px solid #38bdf8;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.25);
+  }
+</style>
+</head>
+<body class="gym-bg gym-grid min-h-screen text-white flex flex-col items-center justify-center p-2 md:p-4">
+
+<div class="pokeball-bg"></div>
+
+<!-- Main Game Container -->
+<div id="app" class="w-full max-w-5xl z-10">
+  
+  <!-- Start Screen -->
+  <div id="start-screen" class="battle-box rounded-2xl p-6 md:p-10 text-center space-y-6">
+    <div class="inline-block px-4 py-1 rounded-full bg-yellow-500/20 border border-yellow-400 text-yellow-300 font-bold text-sm tracking-wider">
+      國中數學・幾何道館挑戰賽
+    </div>
+    <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 drop-shadow">
+      圓心角與圓周角道館戰
+    </h1>
+    <p class="text-slate-300 max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
+      歡迎來到「幾何星辰道館」！道館館主派出了 <span class="text-yellow-300 font-bold">4 隻王牌寶可夢</span> 鎮守關卡。每隻寶可夢各有 <span class="text-sky-300 font-bold">5 道幾何難題（共 20 題）</span>，答對即可對寶可夢造成傷害並收服徽章！
+    </p>
+
+    <!-- Boss Preview Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pt-2">
+      <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-col items-center">
+        <div id="preview-boss-0" class="w-20 h-20"></div>
+        <span class="text-xs text-yellow-400 font-bold mt-1">第 1 戰 (1-5題)</span>
+        <span class="font-bold text-white">皮卡丘</span>
+        <span class="text-xs text-slate-400">基礎圓心與圓周角</span>
+      </div>
+      <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-col items-center">
+        <div id="preview-boss-1" class="w-20 h-20"></div>
+        <span class="text-xs text-sky-400 font-bold mt-1">第 2 戰 (6-10題)</span>
+        <span class="font-bold text-white">傑尼龜</span>
+        <span class="text-xs text-slate-400">同弧圓周角與半圓</span>
+      </div>
+      <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-col items-center">
+        <div id="preview-boss-2" class="w-20 h-20"></div>
+        <span class="text-xs text-emerald-400 font-bold mt-1">第 3 戰 (11-15題)</span>
+        <span class="font-bold text-white">妙蛙種子</span>
+        <span class="text-xs text-slate-400">圓內接四邊形對角</span>
+      </div>
+      <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-col items-center">
+        <div id="preview-boss-3" class="w-20 h-20"></div>
+        <span class="text-xs text-orange-400 font-bold mt-1">最終戰 (16-20題)</span>
+        <span class="font-bold text-white">噴火龍</span>
+        <span class="text-xs text-slate-400">綜合幾何進階應用</span>
+      </div>
+    </div>
+
+    <div class="pt-4">
+      <button onclick="startGame()" class="px-8 py-4 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-950 font-black text-xl rounded-xl shadow-lg shadow-amber-500/30 transform transition hover:scale-105 active:scale-95">
+        ⚔️ 挑戰道館館主！
+      </button>
+    </div>
+  </div>
+
+  <!-- Battle Screen -->
+  <div id="battle-screen" class="hidden space-y-3">
+    
+    <!-- Top Status Bar -->
+    <div class="battle-box rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <span id="stage-badge" class="px-3 py-1 rounded-lg bg-sky-500/20 border border-sky-400 text-sky-300 font-bold text-sm">
+          第 1 戰：皮卡丘
+        </span>
+        <span id="question-counter" class="text-slate-300 font-bold text-sm">
+          題目 1 / 20（本隻第 1 / 5 題）
+        </span>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs text-slate-400">訓練家 HP：</span>
+          <div id="player-hearts" class="flex gap-1 text-rose-500 text-lg">❤️❤️❤️❤️❤️</div>
+        </div>
+        <div class="text-sm font-bold text-yellow-400">
+          積分：<span id="score-display">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Arena Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+      
+      <!-- Left: Visual Battle Arena & Geometry Diagram -->
+      <div class="lg:col-span-5 battle-box rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden" id="arena-panel">
+        <!-- Dynamic Stage Background Tint -->
+        <div id="stage-bg-glow" class="absolute inset-0 opacity-25 pointer-events-none bg-gradient-to-b from-yellow-500 to-transparent"></div>
+
+        <!-- Enemy HUD & Sprite -->
+        <div class="relative z-10 flex items-center justify-between bg-slate-900/80 border border-slate-700 rounded-xl p-2.5">
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="boss-name" class="font-black text-lg text-yellow-300">皮卡丘</span>
+              <span id="boss-level" class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">Lv.15</span>
+            </div>
+            <div class="w-36 md:w-44 h-2.5 bg-slate-700 rounded-full mt-1.5 overflow-hidden border border-slate-600">
+              <div id="boss-hp-bar" class="h-full bg-emerald-400 transition-all duration-500" style="width: 100%"></div>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-0.5">HP: <span id="boss-hp-text">5 / 5</span></div>
+          </div>
+          <div id="boss-sprite-container" class="w-20 h-20 animate-float flex items-center justify-center">
+            <!-- Boss SVG injected here -->
+          </div>
+        </div>
+
+        <!-- Geometry Diagram Board -->
+        <div class="relative z-10 my-2 bg-slate-950/90 border-2 border-slate-700 rounded-xl p-2 flex flex-col items-center justify-center">
+          <div class="text-[11px] text-sky-400 font-bold self-start px-2">📐 幾何圖示（O 為圓心）</div>
+          <div id="geometry-canvas" class="w-56 h-56 md:w-64 md:h-64 flex items-center justify-center">
+            <!-- Dynamic SVG Geometry Diagram -->
+          </div>
+        </div>
+
+        <!-- Trainer Dialogue / Battle Log -->
+        <div class="relative z-10 bg-slate-900/90 border border-slate-700 rounded-xl p-2.5 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-rose-600 border-2 border-white flex items-center justify-center font-black text-sm shrink-0 shadow">
+            小智
+          </div>
+          <p id="battle-log" class="text-xs md:text-sm text-slate-200 leading-snug">
+            館主派出了皮卡丘！解開圓心角與圓周角的秘密來發動攻擊吧！
+          </p>
+        </div>
+      </div>
+
+      <!-- Right: Question & Options Panel -->
+      <div class="lg:col-span-7 battle-box rounded-2xl p-5 flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span id="topic-tag" class="text-xs font-bold px-2.5 py-1 rounded bg-indigo-500/30 text-indigo-300 border border-indigo-500/40">
+              概念：圓心角與圓周角關係
+            </span>
+            <button onclick="toggleHint()" class="text-xs px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition">
+              💡 提示錦囊
+            </button>
+          </div>
+          
+          <h2 id="question-text" class="text-lg md:text-xl font-bold text-white leading-relaxed">
+            載入題目中...
+          </h2>
+
+          <div id="hint-box" class="hidden mt-3 p-3 rounded-xl bg-amber-950/60 border border-amber-500/50 text-amber-200 text-sm">
+            <!-- Hint text -->
+          </div>
+        </div>
+
+        <!-- Options Grid -->
+        <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Buttons injected here -->
+        </div>
+
+        <!-- Explanation & Next Button -->
+        <div id="feedback-box" class="hidden rounded-xl p-4 border space-y-3">
+          <div class="flex items-start gap-2">
+            <span id="feedback-icon" class="text-xl"></span>
+            <div>
+              <h3 id="feedback-title" class="font-bold text-base"></h3>
+              <p id="feedback-rationale" class="text-sm text-slate-200 mt-1 leading-relaxed"></p>
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button id="next-btn" onclick="nextQuestion()" class="px-6 py-2.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black rounded-xl transition transform hover:scale-105">
+              下一題 ➡️
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Screen -->
+  <div id="result-screen" class="hidden battle-box rounded-2xl p-6 md:p-10 text-center space-y-6">
+    <div id="result-badge" class="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-yellow-400 to-amber-600 flex items-center justify-center text-5xl shadow-lg shadow-amber-500/40 border-4 border-white">
+      🏆
+    </div>
+    <h2 id="result-title" class="text-3xl md:text-4xl font-black text-yellow-300">
+      道館挑戰成功！
+    </h2>
+    <p id="result-subtitle" class="text-slate-300 text-lg max-w-xl mx-auto">
+      恭喜你擊敗了道館館主的全部 4 隻寶可夢，獲得「幾何星辰徽章」！
+    </p>
+    
+    <div class="grid grid-cols-3 gap-4 max-w-lg mx-auto bg-slate-900/80 border border-slate-700 rounded-xl p-4">
+      <div>
+        <div class="text-xs text-slate-400">答對題數</div>
+        <div id="final-correct" class="text-2xl font-black text-emerald-400">20 / 20</div>
+      </div>
+      <div>
+        <div class="text-xs text-slate-400">最終積分</div>
+        <div id="final-score" class="text-2xl font-black text-yellow-400">2000</div>
+      </div>
+      <div>
+        <div class="text-xs text-slate-400">訓練家評級</div>
+        <div id="final-rank" class="text-2xl font-black text-sky-400">大師級</div>
+      </div>
+    </div>
+
+    <div class="pt-4">
+      <button onclick="restartGame()" class="px-8 py-3.5 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-slate-950 font-black text-lg rounded-xl shadow-lg transition transform hover:scale-105">
+        🔄 再次挑戰道館
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Boss SVG Artworks (Pikachu, Squirtle, Bulbasaur, Charizard stylized SVGs)
+const BOSSES = [
+  {
+    name: "皮卡丘",
+    level: "Lv.18",
+    color: "from-yellow-500 to-transparent",
+    badgeColor: "text-yellow-300",
+    intro: "館主派出了皮卡丘！用「圓心角＝2倍圓周角」來破解它的十萬伏特吧！",
+    svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+      <path d="M25 45 L10 10 L35 32 Z" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
+      <path d="M10 10 L18 22 L25 18 Z" fill="#1e293b"/>
+      <path d="M75 45 L90 10 L65 32 Z" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
+      <path d="M90 10 L82 22 L75 18 Z" fill="#1e293b"/>
+      <circle cx="50" cy="58" r="30" fill="#facc15" stroke="#1e293b" stroke-width="2.5"/>
+      <circle cx="38" cy="52" r="4.5" fill="#1e293b"/>
+      <circle cx="39.5" cy="50.5" r="1.5" fill="#fff"/>
+      <circle cx="62" cy="52" r="4.5" fill="#1e293b"/>
+      <circle cx="63.5" cy="50.5" r="1.5" fill="#fff"/>
+      <circle cx="29" cy="64" r="6" fill="#ef4444"/>
+      <circle cx="71" cy="64" r="6" fill="#ef4444"/>
+      <path d="M44 64 Q50 69 56 64" fill="none" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    name: "傑尼龜",
+    level: "Lv.24",
+    color: "from-sky-500 to-transparent",
+    badgeColor: "text-sky-300",
+    intro: "第二隻寶可夢是傑尼龜！小心它的水砲，記住「半圓所對圓周角為 90°」！",
+    svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+      <circle cx="50" cy="55" r="32" fill="#38bdf8" stroke="#1e293b" stroke-width="2.5"/>
+      <ellipse cx="50" cy="66" rx="22" ry="16" fill="#fef08a" stroke="#1e293b" stroke-width="2"/>
+      <circle cx="38" cy="46" r="5" fill="#1e293b"/>
+      <circle cx="39.5" cy="44" r="1.8" fill="#fff"/>
+      <circle cx="62" cy="46" r="5" fill="#1e293b"/>
+      <circle cx="63.5" cy="44" r="1.8" fill="#fff"/>
+      <path d="M41 58 Q50 65 59 58" fill="none" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    name: "妙蛙種子",
+    level: "Lv.30",
+    color: "from-emerald-500 to-transparent",
+    badgeColor: "text-emerald-300",
+    intro: "第三隻寶可夢是妙蛙種子！活用「圓內接四邊形對角互補」斬斷藤鞭！",
+    svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+      <path d="M28 40 C28 15, 72 15, 72 40 Z" fill="#16a34a" stroke="#1e293b" stroke-width="2.5"/>
+      <path d="M50 18 L42 36 L58 36 Z" fill="#22c55e"/>
+      <rect x="22" y="38" width="56" height="42" rx="18" fill="#2dd4bf" stroke="#1e293b" stroke-width="2.5"/>
+      <circle cx="36" cy="54" r="5" fill="#dc2626"/>
+      <circle cx="37" cy="52.5" r="1.5" fill="#fff"/>
+      <circle cx="64" cy="54" r="5" fill="#dc2626"/>
+      <circle cx="65" cy="52.5" r="1.5" fill="#fff"/>
+      <path d="M38 68 Q50 75 62 68" fill="none" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    name: "噴火龍",
+    level: "Lv.38",
+    color: "from-orange-500 to-transparent",
+    badgeColor: "text-orange-300",
+    intro: "最終王牌噴火龍登場！結合圓周角、弦與切線性質，奪下道館徽章吧！",
+    svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+      <path d="M25 38 L5 18 L22 55 Z" fill="#0284c7" stroke="#1e293b" stroke-width="2"/>
+      <path d="M75 38 L95 18 L78 55 Z" fill="#0284c7" stroke="#1e293b" stroke-width="2"/>
+      <path d="M35 30 L28 12 L43 26 Z" fill="#f97316" stroke="#1e293b" stroke-width="2"/>
+      <path d="M65 30 L72 12 L57 26 Z" fill="#f97316" stroke="#1e293b" stroke-width="2"/>
+      <ellipse cx="50" cy="58" rx="26" ry="30" fill="#f97316" stroke="#1e293b" stroke-width="2.5"/>
+      <circle cx="39" cy="48" r="4.5" fill="#fef08a" stroke="#1e293b" stroke-width="1.5"/>
+      <circle cx="40" cy="48" r="2" fill="#1e293b"/>
+      <circle cx="61" cy="48" r="4.5" fill="#fef08a" stroke="#1e293b" stroke-width="1.5"/>
+      <circle cx="60" cy="48" r="2" fill="#1e293b"/>
+      <path d="M38 66 Q50 74 62 66" fill="none" stroke="#1e293b" stroke-width="2.5"/>
+      <path d="M41 67 L43 72 L45 68 M55 68 L57 72 L59 67" fill="#fff"/>
+    </svg>`
+  }
+];
+
+// Helper to compute SVG coordinates on a circle (cx=120, cy=120, r=82)
+function pt(deg, r = 82) {
+  const rad = (deg - 90) * Math.PI / 180;
+  return {
+    x: +(120 + r * Math.cos(rad)).toFixed(1),
+    y: +(120 + r * Math.sin(rad)).toFixed(1)
+  };
+}
+
+function labelPt(deg, r = 98) {
+  return pt(deg, r);
+}
+
+// 20 Junior High School Circle Angle Questions (5 per Boss)
+const QUESTIONS = [
+  // ================= BOSS 1: 皮卡丘 (1-5) =================
+  {
+    bossIdx: 0,
+    topic: "圓心角與圓周角基本關係",
+    question: "如圖，A、B、C 三點在圓 O 上，若圓心角 ∠AOB = 84°，則圓周角 ∠ACB 的度數為何？",
+    options: ["42°", "84°", "168°", "48°"],
+    correct: 0,
+    hint: "同弧所對的圓周角等於圓心角的一半。",
+    rationale: "因為 ∠ACB 與圓心角 ∠AOB 對同一個弧 AB，所以 ∠ACB = 1/2 ∠AOB = 84° ÷ 2 = 42°。",
+    draw: () => {
+      const A = pt(225), B = pt(135), C = pt(15);
+      const lA = labelPt(225), lB = labelPt(135), lC = labelPt(15);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+        <path d="M ${A.x} ${A.y} A 82 82 0 0 0 ${B.x} ${B.y}" fill="none" stroke="#facc15" stroke-width="4"/>
+        <line x1="120" y1="120" x2="${A.x}" y2="${A.y}" stroke="#facc15" stroke-width="2"/>
+        <line x1="120" y1="120" x2="${B.x}" y2="${B.y}" stroke="#facc15" stroke-width="2"/>
+        <line x1="${C.x}" y1="${C.y}" x2="${A.x}" y2="${A.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${C.x}" y1="${C.y}" x2="${B.x}" y2="${B.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="120" cy="120" r="3.5" fill="#facc15"/>
+        <text x="115" y="110" fill="#facc15" font-size="13" font-weight="bold">O</text>
+        <text x="106" y="148" fill="#facc15" font-size="13" font-weight="bold">84°</text>
+        <text x="${lA.x-5}" y="${lA.y+5}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-3}" y="${lB.y+5}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-4}" y="${lC.y+4}" fill="#fff" font-size="14" font-weight="bold">C</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 0,
+    topic: "圓周角求圓心角",
+    question: "如圖，P、Q、R 三點在圓 O 上，已知圓周角 ∠PRQ = 53°，則圓心角 ∠POQ 是多少度？",
+    options: ["106°", "53°", "127°", "26.5°"],
+    correct: 0,
+    hint: "圓心角的度數是同弧所對圓周角的 2 倍。",
+    rationale: "圓心角 ∠POQ 與圓周角 ∠PRQ 對同弧 PQ，因此 ∠POQ = 2 × ∠PRQ = 2 × 53° = 106°。",
+    draw: () => {
+      const P = pt(235), Q = pt(125), R = pt(340);
+      const lP = labelPt(235), lQ = labelPt(125), lR = labelPt(340);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+        <line x1="120" y1="120" x2="${P.x}" y2="${P.y}" stroke="#f472b6" stroke-width="2"/>
+        <line x1="120" y1="120" x2="${Q.x}" y2="${Q.y}" stroke="#f472b6" stroke-width="2"/>
+        <line x1="${R.x}" y1="${R.y}" x2="${P.x}" y2="${P.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${R.x}" y1="${R.y}" x2="${Q.x}" y2="${Q.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="120" cy="120" r="3.5" fill="#f472b6"/>
+        <text x="115" y="109" fill="#f472b6" font-size="13" font-weight="bold">O</text>
+        <text x="${R.x-12}" y="${R.y+28}" fill="#38bdf8" font-size="13" font-weight="bold">53°</text>
+        <text x="${lP.x-6}" y="${lP.y+5}" fill="#fff" font-size="14" font-weight="bold">P</text>
+        <text x="${lQ.x-2}" y="${lQ.y+5}" fill="#fff" font-size="14" font-weight="bold">Q</text>
+        <text x="${lR.x-5}" y="${lR.y+3}" fill="#fff" font-size="14" font-weight="bold">R</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 0,
+    topic: "弧的度數與圓心角",
+    question: "如圖，圓 O 中劣弧 AB 的度數為 110°，若 C 點在優弧 AB 上，則 ∠ACB + ∠AOB 為多少度？",
+    options: ["165°", "110°", "220°", "135°"],
+    correct: 0,
+    hint: "劣弧度數等於它所對的圓心角度數，而圓周角為弧度數的一半。",
+    rationale: "劣弧 AB = 110°，故圓心角 ∠AOB = 110°，圓周角 ∠ACB = 110° ÷ 2 = 55°，兩者相加為 110° + 55° = 165°。",
+    draw: () => {
+      const A = pt(235), B = pt(125), C = pt(25);
+      const lA = labelPt(235), lB = labelPt(125), lC = labelPt(25);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+        <path d="M ${A.x} ${A.y} A 82 82 0 0 0 ${B.x} ${B.y}" fill="none" stroke="#fb923c" stroke-width="4"/>
+        <line x1="120" y1="120" x2="${A.x}" y2="${A.y}" stroke="#fb923c" stroke-width="2"/>
+        <line x1="120" y1="120" x2="${B.x}" y2="${B.y}" stroke="#fb923c" stroke-width="2"/>
+        <line x1="${C.x}" y1="${C.y}" x2="${A.x}" y2="${A.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${C.x}" y1="${C.y}" x2="${B.x}" y2="${B.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="120" cy="120" r="3.5" fill="#fb923c"/>
+        <text x="115" y="109" fill="#fb923c" font-size="13" font-weight="bold">O</text>
+        <text x="104" y="216" fill="#fb923c" font-size="13" font-weight="bold">110°</text>
+        <text x="${lA.x-6}" y="${lA.y+5}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-2}" y="${lB.y+5}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-3}" y="${lC.y+3}" fill="#fff" font-size="14" font-weight="bold">C</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 0,
+    topic: "優弧所對的圓周角",
+    question: "如圖，A、B、C 三點在圓 O 上，若圓心角 ∠AOB = 130°（劣弧 AB），且 D 點在劣弧 AB 上，則 ∠ADB 為多少度？",
+    options: ["115°", "65°", "130°", "50°"],
+    correct: 0,
+    hint: "∠ADB 所對的是「優弧 AB」，先算出優弧 AB 的度數（360° - 130°）。",
+    rationale: "優弧 AB = 360° - 130° = 230°。圓周角 ∠ADB 對優弧 AB，因此 ∠ADB = 230° ÷ 2 = 115°。",
+    draw: () => {
+      const A = pt(245), B = pt(115), D = pt(180);
+      const lA = labelPt(245), lB = labelPt(115), lD = labelPt(180);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+        <line x1="120" y1="120" x2="${A.x}" y2="${A.y}" stroke="#facc15" stroke-width="2"/>
+        <line x1="120" y1="120" x2="${B.x}" y2="${B.y}" stroke="#facc15" stroke-width="2"/>
+        <line x1="${D.x}" y1="${D.y}" x2="${A.x}" y2="${A.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${D.x}" y1="${D.y}" x2="${B.x}" y2="${B.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="120" cy="120" r="3.5" fill="#facc15"/>
+        <text x="115" y="108" fill="#facc15" font-size="13" font-weight="bold">O</text>
+        <text x="106" y="146" fill="#facc15" font-size="13" font-weight="bold">130°</text>
+        <text x="${lA.x-6}" y="${lA.y+4}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-2}" y="${lB.y+4}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lD.x-5}" y="${lD.y+8}" fill="#fff" font-size="14" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 0,
+    topic: "等腰三角形與圓心角",
+    question: "如圖，A、B、C 在圓 O 上，若 ∠OAB = 32°，則圓周角 ∠ACB 為多少度？",
+    options: ["58°", "32°", "64°", "116°"],
+    correct: 0,
+    hint: "OA 與 OB 都是圓的半徑，所以 △OAB 是等腰三角形！先求出圓心角 ∠AOB。",
+    rationale: "因為 OA = OB（半徑），所以 ∠OBA = ∠OAB = 32°，圓心角 ∠AOB = 180° - 32°×2 = 116°。故 ∠ACB = 116° ÷ 2 = 58°。",
+    draw: () => {
+      const A = pt(238), B = pt(122), C = pt(350);
+      const lA = labelPt(238), lB = labelPt(122), lC = labelPt(350);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+        <polygon points="120,120 ${A.x},${A.y} ${B.x},${B.y}" fill="rgba(250,204,21,0.12)" stroke="#facc15" stroke-width="2"/>
+        <line x1="${C.x}" y1="${C.y}" x2="${A.x}" y2="${A.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${C.x}" y1="${C.y}" x2="${B.x}" y2="${B.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="120" cy="120" r="3.5" fill="#facc15"/>
+        <text x="115" y="108" fill="#facc15" font-size="13" font-weight="bold">O</text>
+        <text x="${A.x+16}" y="${A.y-4}" fill="#facc15" font-size="12" font-weight="bold">32°</text>
+        <text x="${lA.x-6}" y="${lA.y+5}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-2}" y="${lB.y+5}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-5}" y="${lC.y+3}" fill="#fff" font-size="14" font-weight="bold">C</text>
+      </svg>`;
+    }
+  },
+
+  // ================= BOSS 2: 傑尼龜 (6-10) =================
+  {
+    bossIdx: 1,
+    topic: "同弧所對的圓周角相等",
+    question: "如圖，A、B、C、D 四點在圓 O 上，AC 與 BD 交於 E 點。若 ∠ADB = 38° 且 ∠CBD = 45°，則 ∠AEB 為多少度？",
+    options: ["83°", "97°", "76°", "90°"],
+    correct: 0,
+    hint: "∠ACB 與 ∠ADB 對同一個弧 AB，所以度數相等；再利用 △EBC 的外角定理。",
+    rationale: "同弧 AB 所對圓周角 ∠ACB = ∠ADB = 38°。在 △EBC 中，外角 ∠AEB = ∠ACB + ∠CBD = 38° + 45° = 83°。",
+    draw: () => {
+      const A = pt(225), B = pt(135), C = pt(40), D = pt(315);
+      const lA = labelPt(225), lB = labelPt(135), lC = labelPt(40), lD = labelPt(315);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${C.x}" y2="${C.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${B.x}" y1="${B.y}" x2="${D.x}" y2="${D.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${D.x}" y2="${D.y}" stroke="#38bdf8" stroke-width="1.8"/>
+        <line x1="${B.x}" y1="${B.y}" x2="${C.x}" y2="${C.y}" stroke="#38bdf8" stroke-width="1.8"/>
+        <text x="108" y="138" fill="#facc15" font-size="13" font-weight="bold">E</text>
+        <text x="${D.x+10}" y="${D.y+22}" fill="#38bdf8" font-size="12" font-weight="bold">38°</text>
+        <text x="${B.x-10}" y="${B.y-18}" fill="#38bdf8" font-size="12" font-weight="bold">45°</text>
+        <text x="${lA.x-6}" y="${lA.y+5}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-2}" y="${lB.y+5}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-2}" y="${lC.y+3}" fill="#fff" font-size="14" font-weight="bold">C</text>
+        <text x="${lD.x-6}" y="${lD.y+3}" fill="#fff" font-size="14" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 1,
+    topic: "半圓所對的圓周角",
+    question: "如圖，AB 為圓 O 的直徑，C 點在圓上。若 ∠CAB = 34°，則 ∠ABC 為多少度？",
+    options: ["56°", "34°", "68°", "46°"],
+    correct: 0,
+    hint: "直徑所對的圓周角必為直角（90°）。",
+    rationale: "因為 AB 是直徑，所以半圓所對的圓周角 ∠ACB = 90°。在直角 △ABC 中，∠ABC = 90° - 34° = 56°。",
+    draw: () => {
+      const A = pt(270), B = pt(90), C = pt(338);
+      const lA = labelPt(270), lB = labelPt(90), lC = labelPt(338);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#facc15" stroke-width="2.5"/>
+        <line x1="${C.x}" y1="${C.y}" x2="${A.x}" y2="${A.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${C.x}" y1="${C.y}" x2="${B.x}" y2="${B.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="120" cy="120" r="3.5" fill="#facc15"/>
+        <text x="116" y="135" fill="#facc15" font-size="13" font-weight="bold">O</text>
+        <text x="${A.x+16}" y="${A.y-4}" fill="#38bdf8" font-size="12" font-weight="bold">34°</text>
+        <text x="${lA.x-8}" y="${lA.y+5}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x}" y="${lB.y+5}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-5}" y="${lC.y+2}" fill="#fff" font-size="14" font-weight="bold">C</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 1,
+    topic: "直徑與圓周角綜合",
+    question: "如圖，AB 為圓 O 的直徑，C、D 在圓上且位於 AB 同側。若 ∠ABD = 28°，則 ∠ACD 為多少度？",
+    options: ["62°", "28°", "118°", "56°"],
+    correct: 0,
+    hint: "連接 AD，利用 ∠ADB = 90° 求出 ∠BAD，再找同弧 BD 所對的圓周角。",
+    rationale: "AB 為直徑，故 ∠ADB = 90°，得 ∠BAD = 90° - 28° = 62°。又 ∠ACD 與 ∠BAD 對同弧 BD，所以 ∠ACD = 62°。",
+    draw: () => {
+      const A = pt(270), B = pt(90), C = pt(305), D = pt(34);
+      const lA = labelPt(270), lB = labelPt(90), lC = labelPt(305), lD = labelPt(34);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#facc15" stroke-width="2.5"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${C.x}" y2="${C.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${C.x}" y1="${C.y}" x2="${D.x}" y2="${D.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${B.x}" y1="${B.y}" x2="${D.x}" y2="${D.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="120" cy="120" r="3.5" fill="#facc15"/>
+        <text x="116" y="135" fill="#facc15" font-size="13" font-weight="bold">O</text>
+        <text x="${B.x-32}" y="${B.y-8}" fill="#38bdf8" font-size="12" font-weight="bold">28°</text>
+        <text x="${lA.x-8}" y="${lA.y+5}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x}" y="${lB.y+5}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-8}" y="${lC.y+3}" fill="#fff" font-size="14" font-weight="bold">C</text>
+        <text x="${lD.x-2}" y="${lD.y+3}" fill="#fff" font-size="14" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 1,
+    topic: "等弦對等弧與圓周角",
+    question: "如圖，圓 O 中弦 AB = 弦 BC，且圓周角 ∠BAC = 35°，則圓心角 ∠AOC 為多少度？",
+    options: ["140°", "70°", "110°", "105°"],
+    correct: 0,
+    hint: "等弦對等弧，先求弧 BC 的度數，即可推得弧 AB 與整個優弧或劣弧 AC 的度數。",
+    rationale: "∠BAC = 35° 對弧 BC，故弧 BC = 70°。因為弦 AB = 弦 BC，所以弧 AB = 70°。優弧 ABC = 140°（或劣弧 AC = 140°），圓心角 ∠AOC = 140°。",
+    draw: () => {
+      const A = pt(230), B = pt(340), C = pt(90);
+      const lA = labelPt(230), lB = labelPt(340), lC = labelPt(90);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${B.x}" y1="${B.y}" x2="${C.x}" y2="${C.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${C.x}" y2="${C.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="120" y1="120" x2="${A.x}" y2="${A.y}" stroke="#facc15" stroke-width="2" stroke-dasharray="4"/>
+        <line x1="120" y1="120" x2="${C.x}" y2="${C.y}" stroke="#facc15" stroke-width="2" stroke-dasharray="4"/>
+        <circle cx="120" cy="120" r="3.5" fill="#facc15"/>
+        <text x="115" y="110" fill="#facc15" font-size="13" font-weight="bold">O</text>
+        <text x="${A.x+16}" y="${A.y-20}" fill="#38bdf8" font-size="12" font-weight="bold">35°</text>
+        <text x="${lA.x-6}" y="${lA.y+5}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-5}" y="${lB.y+2}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x}" y="${lC.y+5}" fill="#fff" font-size="14" font-weight="bold">C</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 1,
+    topic: "圓周角比例與弧度",
+    question: "如圖，A、B、C、D 將圓周分成 4 個弧，其度數比 弧AB：弧BC：弧CD：弧DA = 2：3：4：3，則 ∠ABC 為多少度？",
+    options: ["105°", "75°", "90°", "120°"],
+    correct: 0,
+    hint: "整個圓周為 360°，先算出每 1 份代表幾度，再看 ∠ABC 所對的是哪兩段弧。",
+    rationale: "總份數 2+3+4+3 = 12 份，每份 360° ÷ 12 = 30°。∠ABC 所對的是 弧ADC = 弧AD + 弧DC = (3+4)×30° = 210°，故 ∠ABC = 210° ÷ 2 = 105°。",
+    draw: () => {
+      const A = pt(270), B = pt(330), C = pt(60), D = pt(180);
+      const lA = labelPt(270), lB = labelPt(330), lC = labelPt(60), lD = labelPt(180);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+        <polygon points="${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y} ${D.x},${D.y}" fill="rgba(56,189,248,0.12)" stroke="#e2e8f0" stroke-width="2"/>
+        <text x="${lA.x-8}" y="${lA.y+4}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-5}" y="${lB.y+2}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-2}" y="${lC.y+4}" fill="#fff" font-size="14" font-weight="bold">C</text>
+        <text x="${lD.x-5}" y="${lD.y+8}" fill="#fff" font-size="14" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+
+  // ================= BOSS 3: 妙蛙種子 (11-15) =================
+  {
+    bossIdx: 2,
+    topic: "圓內接四邊形對角互補",
+    question: "如圖，四邊形 ABCD 內接於圓 O，若 ∠A = 82°，則 ∠C 的度數為何？",
+    options: ["98°", "82°", "164°", "108°"],
+    correct: 0,
+    hint: "圓內接四邊形的對角和為 180°。",
+    rationale: "因為四邊形 ABCD 為圓內接四邊形，其對角互補（∠A + ∠C = 180°），所以 ∠C = 180° - 82° = 98°。",
+    draw: () => {
+      const A = pt(310), B = pt(45), C = pt(135), D = pt(220);
+      const lA = labelPt(310), lB = labelPt(45), lC = labelPt(135), lD = labelPt(220);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#34d399" stroke-width="2.5"/>
+        <polygon points="${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y} ${D.x},${D.y}" fill="rgba(52,211,153,0.12)" stroke="#e2e8f0" stroke-width="2"/>
+        <text x="${A.x+10}" y="${A.y+18}" fill="#facc15" font-size="13" font-weight="bold">82°</text>
+        <text x="${lA.x-8}" y="${lA.y+3}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-2}" y="${lB.y+3}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-2}" y="${lC.y+6}" fill="#fff" font-size="14" font-weight="bold">C</text>
+        <text x="${lD.x-6}" y="${lD.y+6}" fill="#fff" font-size="14" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 2,
+    topic: "圓內接四邊形的外角性質",
+    question: "如圖，四邊形 ABCD 內接於圓 O，延長 BC 至 E 點。若 ∠A = 76°，則外角 ∠DCE 為多少度？",
+    options: ["76°", "104°", "152°", "114°"],
+    correct: 0,
+    hint: "圓內接四邊形的任一外角等於它的內對角。",
+    rationale: "因為 ∠BCD + ∠A = 180°，且 ∠BCD + ∠DCE = 180°，所以外角 ∠DCE = 內對角 ∠A = 76°。",
+    draw: () => {
+      const A = pt(315), B = pt(225), C = pt(145), D = pt(45);
+      const lA = labelPt(315), lB = labelPt(225), lC = labelPt(145), lD = labelPt(45);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#34d399" stroke-width="2.5"/>
+        <polygon points="${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y} ${D.x},${D.y}" fill="rgba(52,211,153,0.12)" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${C.x}" y1="${C.y}" x2="225" y2="${C.y+12}" stroke="#facc15" stroke-width="2"/>
+        <text x="${A.x+10}" y="${A.y+18}" fill="#34d399" font-size="13" font-weight="bold">76°</text>
+        <text x="226" y="${C.y+16}" fill="#facc15" font-size="14" font-weight="bold">E</text>
+        <text x="${lA.x-8}" y="${lA.y+3}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-6}" y="${lB.y+6}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-2}" y="${lC.y+14}" fill="#fff" font-size="14" font-weight="bold">C</text>
+        <text x="${lD.x-2}" y="${lD.y+3}" fill="#fff" font-size="14" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 2,
+    topic: "圓內接四邊形與圓心角結合",
+    question: "如圖，四邊形 ABCD 內接於圓 O，若圓心角 ∠BOD = 140°（劣弧 BD），則 ∠BCD 為多少度？",
+    options: ["110°", "70°", "140°", "40°"],
+    correct: 0,
+    hint: "先利用圓心角 ∠BOD 求出圓周角 ∠BAD，再利用對角互補求 ∠BCD。",
+    rationale: "圓周角 ∠BAD = 1/2 ∠BOD = 140° ÷ 2 = 70°。因為 ABCD 內接於圓，∠BCD = 180° - 70° = 110°。",
+    draw: () => {
+      const A = pt(350), B = pt(245), C = pt(175), D = pt(105);
+      const lA = labelPt(350), lB = labelPt(245), lC = labelPt(175), lD = labelPt(105);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#34d399" stroke-width="2.5"/>
+        <polygon points="${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y} ${D.x},${D.y}" fill="rgba(52,211,153,0.1)" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="120" y1="120" x2="${B.x}" y2="${B.y}" stroke="#facc15" stroke-width="2"/>
+        <line x1="120" y1="120" x2="${D.x}" y2="${D.y}" stroke="#facc15" stroke-width="2"/>
+        <circle cx="120" cy="120" r="3.5" fill="#facc15"/>
+        <text x="115" y="108" fill="#facc15" font-size="13" font-weight="bold">O</text>
+        <text x="104" y="144" fill="#facc15" font-size="12" font-weight="bold">140°</text>
+        <text x="${lA.x-5}" y="${lA.y+2}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-6}" y="${lB.y+4}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-5}" y="${lC.y+8}" fill="#fff" font-size="14" font-weight="bold">C</text>
+        <text x="${lD.x}" y="${lD.y+4}" fill="#fff" font-size="14" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 2,
+    topic: "圓內接平行四邊形性質",
+    question: "若平行四邊形 ABCD 的四個頂點皆在圓 O 上，且對角線 AC 通過圓心 O，則 ∠ABC 必為多少度？",
+    options: ["90°", "60°", "120°", "45°"],
+    correct: 0,
+    hint: "平行四邊形的對角相等，而圓內接四邊形的對角又互補！",
+    rationale: "平行四邊形對角相等（∠ABC = ∠ADC），且圓內接四邊形對角互補（∠ABC + ∠ADC = 180°），故 ∠ABC = 90°（必為矩形）。",
+    draw: () => {
+      const A = pt(230), B = pt(130), C = pt(50), D = pt(310);
+      const lA = labelPt(230), lB = labelPt(130), lC = labelPt(50), lD = labelPt(310);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#34d399" stroke-width="2.5"/>
+        <polygon points="${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y} ${D.x},${D.y}" fill="rgba(52,211,153,0.12)" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${C.x}" y2="${C.y}" stroke="#facc15" stroke-width="1.8" stroke-dasharray="4"/>
+        <circle cx="120" cy="120" r="3.5" fill="#facc15"/>
+        <text x="115" y="110" fill="#facc15" font-size="13" font-weight="bold">O</text>
+        <text x="${lA.x-6}" y="${lA.y+6}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-2}" y="${lB.y+6}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-2}" y="${lC.y+3}" fill="#fff" font-size="14" font-weight="bold">C</text>
+        <text x="${lD.x-8}" y="${lD.y+3}" fill="#fff" font-size="14" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 2,
+    topic: "圓內接四邊形代數應用",
+    question: "如圖，四邊形 ABCD 內接於圓 O，若 ∠B = (3x + 10)° 且 ∠D = (2x + 20)°，則 ∠B 的度數為何？",
+    options: ["100°", "80°", "90°", "110°"],
+    correct: 0,
+    hint: "列出方程式：(3x + 10) + (2x + 20) = 180，先解出 x 再代回求 ∠B。",
+    rationale: "對角互補得 (3x + 10) + (2x + 20) = 180 → 5x + 30 = 180 → 5x = 150 → x = 30。代回得 ∠B = 3(30) + 10 = 100°。",
+    draw: () => {
+      const A = pt(355), B = pt(255), C = pt(165), D = pt(85);
+      const lA = labelPt(355), lB = labelPt(255), lC = labelPt(165), lD = labelPt(85);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#34d399" stroke-width="2.5"/>
+        <polygon points="${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y} ${D.x},${D.y}" fill="rgba(52,211,153,0.12)" stroke="#e2e8f0" stroke-width="2"/>
+        <text x="${B.x+12}" y="${B.y+4}" fill="#facc15" font-size="11" font-weight="bold">3x+10°</text>
+        <text x="${D.x-48}" y="${D.y+4}" fill="#38bdf8" font-size="11" font-weight="bold">2x+20°</text>
+        <text x="${lA.x-5}" y="${lA.y+2}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-8}" y="${lB.y+4}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-5}" y="${lC.y+8}" fill="#fff" font-size="14" font-weight="bold">C</text>
+        <text x="${lD.x}" y="${lD.y+4}" fill="#fff" font-size="14" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+
+  // ================= BOSS 4: 噴火龍 (16-20) =================
+  {
+    bossIdx: 3,
+    topic: "弦切角與圓心角",
+    question: "如圖，直線 PT 切圓 O 於 A 點，B 點在圓上。若弦切角 ∠BAP = 62°，則圓心角 ∠AOB 為多少度？",
+    options: ["124°", "62°", "118°", "134°"],
+    correct: 0,
+    hint: "切線與半徑垂直（∠OAP = 90°），先求出 ∠OAB 的度數！",
+    rationale: "因為 PT 為切線，∠OAP = 90°，故 ∠OAB = 90° - 62° = 28°。又 OA = OB，所以 ∠AOB = 180° - 28°×2 = 124°（弦切角亦等於所夾弧的一半）。",
+    draw: () => {
+      const A = pt(180), B = pt(56);
+      const lA = labelPt(180), lB = labelPt(56);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#fb923c" stroke-width="2.5"/>
+        <line x1="35" y1="202" x2="205" y2="202" stroke="#facc15" stroke-width="2.5"/>
+        <line x1="120" y1="120" x2="${A.x}" y2="${A.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="120" y1="120" x2="${B.x}" y2="${B.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#38bdf8" stroke-width="2"/>
+        <circle cx="120" cy="120" r="3.5" fill="#fb923c"/>
+        <text x="108" y="114" fill="#fb923c" font-size="13" font-weight="bold">O</text>
+        <text x="135" y="196" fill="#facc15" font-size="12" font-weight="bold">62°</text>
+        <text x="200" y="217" fill="#facc15" font-size="13" font-weight="bold">P</text>
+        <text x="${lA.x-5}" y="${lA.y+12}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x}" y="${lB.y+3}" fill="#fff" font-size="14" font-weight="bold">B</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 3,
+    topic: "圓外角與弧度差",
+    question: "如圖，圓外一點 P 作兩割線交圓於 A、B 與 C、D。若圓心角 ∠AOC = 110°，∠BOD = 34°，則圓外角 ∠P 為多少度？",
+    options: ["38°", "76°", "72°", "44°"],
+    correct: 0,
+    hint: "圓外角的度數等於所夾兩弧度數差的一半。",
+    rationale: "弧 AC = ∠AOC = 110°，弧 BD = ∠BOD = 34°。圓外角 ∠P = (弧 AC - 弧 BD) ÷ 2 = (110° - 34°) ÷ 2 = 38°。",
+    draw: () => {
+      const A = pt(315), C = pt(225), B = pt(345), D = pt(195);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="76" fill="none" stroke="#fb923c" stroke-width="2.5"/>
+        <line x1="15" y1="120" x2="${A.x}" y2="${A.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="15" y1="120" x2="${C.x}" y2="${C.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="120" cy="120" r="3.5" fill="#fb923c"/>
+        <text x="125" y="124" fill="#fb923c" font-size="13" font-weight="bold">O</text>
+        <text x="6" y="114" fill="#facc15" font-size="14" font-weight="bold">P</text>
+        <text x="${A.x+2}" y="${A.y-4}" fill="#fff" font-size="13" font-weight="bold">A</text>
+        <text x="${C.x+2}" y="${C.y+12}" fill="#fff" font-size="13" font-weight="bold">C</text>
+        <text x="68" y="88" fill="#38bdf8" font-size="13" font-weight="bold">B</text>
+        <text x="68" y="160" fill="#38bdf8" font-size="13" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 3,
+    topic: "圓內角與弧度和",
+    question: "如圖，圓 O 中兩弦 AB 與 CD 相交於圓內一點 E。若 弧AC = 68° 且 弧BD = 84°，則 ∠AED 為多少度？",
+    options: ["104°", "76°", "152°", "96°"],
+    correct: 0,
+    hint: "先用「圓內角＝所夾兩弧度數和的一半」求出 ∠AEC，再求它的補角 ∠AED。",
+    rationale: "圓內角 ∠AEC = (弧AC + 弧BD) ÷ 2 = (68° + 84°) ÷ 2 = 76°。因為 ∠AED 與 ∠AEC 互為鄰補角，所以 ∠AED = 180° - 76° = 104°。",
+    draw: () => {
+      const A = pt(235), B = pt(50), C = pt(310), D = pt(130);
+      const lA = labelPt(235, 95), lB = labelPt(50, 95), lC = labelPt(310, 95), lD = labelPt(130, 95);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#fb923c" stroke-width="2.5"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="${C.x}" y1="${C.y}" x2="${D.x}" y2="${D.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <text x="112" y="108" fill="#facc15" font-size="13" font-weight="bold">E</text>
+        <text x="42" y="124" fill="#38bdf8" font-size="12" font-weight="bold">68°</text>
+        <text x="172" y="124" fill="#38bdf8" font-size="12" font-weight="bold">84°</text>
+        <text x="${lA.x-6}" y="${lA.y+5}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-2}" y="${lB.y+3}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-8}" y="${lC.y+3}" fill="#fff" font-size="14" font-weight="bold">C</text>
+        <text x="${lD.x-2}" y="${lD.y+5}" fill="#fff" font-size="14" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 3,
+    topic: "平行弦截等弧與圓周角",
+    question: "如圖，圓 O 中弦 AB // 弦 CD，且 AB 為直徑。若 ∠ABC = 26°，則圓周角 ∠BCD 為多少度？",
+    options: ["26°", "52°", "64°", "38°"],
+    correct: 0,
+    hint: "兩直線平行，內錯角相等；也可利用平行弦所夾的兩弧相等。",
+    rationale: "因為 AB // CD，根據平行線內錯角相等，∠BCD = ∠ABC = 26°（同時可推得 弧AC = 弧BD = 52°）。",
+    draw: () => {
+      const A = pt(270), B = pt(90), C = pt(322), D = pt(38);
+      const lA = labelPt(270), lB = labelPt(90), lC = labelPt(322), lD = labelPt(38);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#fb923c" stroke-width="2.5"/>
+        <line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="#facc15" stroke-width="2.5"/>
+        <line x1="${C.x}" y1="${C.y}" x2="${D.x}" y2="${D.y}" stroke="#facc15" stroke-width="2.2"/>
+        <line x1="${B.x}" y1="${B.y}" x2="${C.x}" y2="${C.y}" stroke="#e2e8f0" stroke-width="2"/>
+        <circle cx="120" cy="120" r="3.5" fill="#fb923c"/>
+        <text x="116" y="135" fill="#fb923c" font-size="13" font-weight="bold">O</text>
+        <text x="${B.x-36}" y="${B.y-6}" fill="#38bdf8" font-size="12" font-weight="bold">26°</text>
+        <text x="${lA.x-8}" y="${lA.y+5}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x}" y="${lB.y+5}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-6}" y="${lC.y+2}" fill="#fff" font-size="14" font-weight="bold">C</text>
+        <text x="${lD.x-2}" y="${lD.y+2}" fill="#fff" font-size="14" font-weight="bold">D</text>
+      </svg>`;
+    }
+  },
+  {
+    bossIdx: 3,
+    topic: "四邊形外接圓與圓心角綜合終極戰",
+    question: "如圖，A、B、C、D、E 五點在圓 O 上，若 ∠A = 105° 且 ∠C = 115°，則圓心角 ∠BOE（劣弧 BE）為多少度？",
+    options: ["80°", "140°", "100°", "70°"],
+    correct: 0,
+    hint: "在五邊形 ABCDE 中，連接 BE 或利用圓周角對弧度：∠A 對 弧BCDE，∠C 對 弧ABDE，兩者重疊了 弧BDE！",
+    rationale: "∠A = 105° 對 弧BCDE = 210°；∠C = 115° 對 弧ABDE = 230°。兩弧相加 = 全圓(360°) + 弧BDE，故 弧BDE = 210° + 230° - 360° = 80°，圓心角 ∠BOE = 80°！",
+    draw: () => {
+      const A = pt(290), B = pt(220), C = pt(150), D = pt(80), E = pt(10);
+      const lA = labelPt(290), lB = labelPt(220), lC = labelPt(150), lD = labelPt(80), lE = labelPt(10);
+      return `<svg viewBox="0 0 240 240" class="w-full h-full">
+        <circle cx="120" cy="120" r="82" fill="none" stroke="#fb923c" stroke-width="2.5"/>
+        <polygon points="${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y} ${D.x},${D.y} ${E.x},${E.y}" fill="rgba(251,146,60,0.12)" stroke="#e2e8f0" stroke-width="2"/>
+        <line x1="120" y1="120" x2="${B.x}" y2="${B.y}" stroke="#facc15" stroke-width="2" stroke-dasharray="4"/>
+        <line x1="120" y1="120" x2="${E.x}" y2="${E.y}" stroke="#facc15" stroke-width="2" stroke-dasharray="4"/>
+        <circle cx="120" cy="120" r="3.5" fill="#facc15"/>
+        <text x="125" y="125" fill="#facc15" font-size="13" font-weight="bold">O</text>
+        <text x="${lA.x-8}" y="${lA.y+4}" fill="#fff" font-size="14" font-weight="bold">A</text>
+        <text x="${lB.x-6}" y="${lB.y+6}" fill="#fff" font-size="14" font-weight="bold">B</text>
+        <text x="${lC.x-2}" y="${lC.y+6}" fill="#fff" font-size="14" font-weight="bold">C</text>
+        <text x="${lD.x}" y="${lD.y+4}" fill="#fff" font-size="14" font-weight="bold">D</text>
+        <text x="${lE.x-4}" y="${lE.y+2}" fill="#fff" font-size="14" font-weight="bold">E</text>
+      </svg>`;
+    }
+  }
+];
+
+// Game State
+let currentIdx = 0;
+let score = 0;
+let correctCount = 0;
+let playerHP = 5;
+let bossHP = 5;
+let answered = false;
+let currentShuffledOptions = [];
+
+// Render preview sprites on start screen
+window.onload = () => {
+  BOSSES.forEach((b, i) => {
+    document.getElementById(`preview-boss-${i}`).innerHTML = b.svg;
+  });
+};
+
+function startGame() {
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('battle-screen').classList.remove('hidden');
+  currentIdx = 0;
+  score = 0;
+  correctCount = 0;
+  playerHP = 5;
+  bossHP = 5;
+  loadQuestion();
+}
+
+function restartGame() {
+  document.getElementById('result-screen').classList.add('hidden');
+  startGame();
+}
+
+function loadQuestion() {
+  answered = false;
+  const q = QUESTIONS[currentIdx];
+  const bossIdx = q.bossIdx;
+  const boss = BOSSES[bossIdx];
+  const qInBoss = (currentIdx % 5) + 1;
+
+  // Reset Boss HP at start of each 5-question block
+  if (qInBoss === 1) {
+    bossHP = 5;
+    document.getElementById('battle-log').textContent = boss.intro;
+  }
+
+  // Update Top Bar
+  document.getElementById('stage-badge').textContent = `第 ${bossIdx + 1} 戰：${boss.name}`;
+  document.getElementById('question-counter').textContent = `題目 ${currentIdx + 1} / 20（本隻第 ${qInBoss} / 5 題）`;
+  document.getElementById('score-display').textContent = score;
+  updateHearts();
+
+  // Update Boss HUD
+  document.getElementById('boss-name').textContent = boss.name;
+  document.getElementById('boss-level').textContent = boss.level;
+  document.getElementById('boss-sprite-container').innerHTML = boss.svg;
+  document.getElementById('stage-bg-glow').className = `absolute inset-0 opacity-25 pointer-events-none bg-gradient-to-b ${boss.color}`;
+  updateBossHP();
+
+  // Draw Geometry SVG
+  document.getElementById('geometry-canvas').innerHTML = q.draw();
+
+  // Populate Question & Hint
+  document.getElementById('topic-tag').textContent = `概念：${q.topic}`;
+  document.getElementById('question-text').textContent = `${currentIdx + 1}. ${q.question}`;
+  const hintBox = document.getElementById('hint-box');
+  hintBox.textContent = `💡 提示：${q.hint}`;
+  hintBox.classList.add('hidden');
+
+  // Hide Feedback
+  document.getElementById('feedback-box').classList.add('hidden');
+
+  // Shuffle options while tracking correct answer
+  const mapped = q.options.map((text, idx) => ({ text, isCorrect: idx === q.correct }));
+  currentShuffledOptions = mapped.sort(() => Math.random() - 0.5);
+
+  const labels = ['A', 'B', 'C', 'D'];
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+
+  currentShuffledOptions.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = "option-btn text-left p-4 rounded-xl bg-slate-800/90 hover:bg-slate-700 border-2 border-slate-600 hover:border-sky-400 transition flex items-center gap-3 font-bold text-lg text-white";
+    btn.innerHTML = `
+      <span class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-600 flex items-center justify-center text-sky-400 text-sm font-black shrink-0">${labels[i]}</span>
+      <span>${opt.text}</span>
+    `;
+    btn.onclick = () => selectAnswer(i, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function toggleHint() {
+  document.getElementById('hint-box').classList.toggle('hidden');
+}
+
+function updateHearts() {
+  const full = '❤️'.repeat(Math.max(0, playerHP));
+  const empty = '🖤'.repeat(Math.max(0, 5 - playerHP));
+  document.getElementById('player-hearts').textContent = full + empty;
+}
+
+function updateBossHP() {
+  const pct = (bossHP / 5) * 100;
+  const bar = document.getElementById('boss-hp-bar');
+  bar.style.width = `${pct}%`;
+  bar.className = `h-full transition-all duration-500 ${pct > 50 ? 'bg-emerald-400' : pct > 20 ? 'bg-yellow-400' : 'bg-rose-500'}`;
+  document.getElementById('boss-hp-text').textContent = `${bossHP} / 5`;
+}
+
+function selectAnswer(selectedIdx, btnElement) {
+  if (answered) return;
+  answered = true;
+
+  const q = QUESTIONS[currentIdx];
+  const boss = BOSSES[q.bossIdx];
+  const isRight = currentShuffledOptions[selectedIdx].isCorrect;
+  const buttons = document.querySelectorAll('.option-btn');
+
+  buttons.forEach((btn, idx) => {
+    btn.disabled = true;
+    btn.classList.remove('hover:bg-slate-700', 'hover:border-sky-400');
+    if (currentShuffledOptions[idx].isCorrect) {
+      btn.classList.remove('bg-slate-800/90', 'border-slate-600');
+      btn.classList.add('bg-emerald-900/80', 'border-emerald-400', 'text-emerald-200');
+    } else if (idx === selectedIdx && !isRight) {
+      btn.classList.remove('bg-slate-800/90', 'border-slate-600');
+      btn.classList.add('bg-rose-900/80', 'border-rose-500', 'text-rose-200');
+    } else {
+      btn.classList.add('opacity-50');
+    }
+  });
+
+  const feedbackBox = document.getElementById('feedback-box');
+  const feedbackIcon = document.getElementById('feedback-icon');
+  const feedbackTitle = document.getElementById('feedback-title');
+  const feedbackRationale = document.getElementById('feedback-rationale');
+  const sprite = document.getElementById('boss-sprite-container');
+
+  feedbackBox.classList.remove('hidden', 'bg-emerald-950/70', 'border-emerald-500', 'bg-rose-950/70', 'border-rose-500');
+
+  if (isRight) {
+    score += 100;
+    correctCount++;
+    bossHP = Math.max(0, bossHP - 1);
+    updateBossHP();
+    document.getElementById('score-display').textContent = score;
+
+    // Hit animation on boss
+    sprite.classList.add('animate-hit');
+    setTimeout(() => sprite.classList.remove('animate-hit'), 500);
+
+    feedbackBox.classList.add('bg-emerald-950/70', 'border-emerald-500');
+    feedbackIcon.textContent = "💥";
+    feedbackTitle.textContent = `效果絕佳！對 ${boss.name} 造成 1 點傷害！`;
+    feedbackTitle.className = "font-bold text-base text-emerald-300";
+    document.getElementById('battle-log').textContent = bossHP === 0 
+      ? `太厲害了！${boss.name} 失去戰鬥能力！準備迎接下一位對手！`
+      : `命中要害！${boss.name} 還剩下 ${bossHP} 點體力！`;
+  } else {
+    playerHP = Math.max(0, playerHP - 1);
+    updateHearts();
+
+    // Shake arena
+    const arena = document.getElementById('arena-panel');
+    arena.classList.add('animate-shake');
+    setTimeout(() => arena.classList.remove('animate-shake'), 450);
+
+    feedbackBox.classList.add('bg-rose-950/70', 'border-rose-500');
+    feedbackIcon.textContent = "🛡️";
+    feedbackTitle.textContent = `攻擊被 ${boss.name} 閃開並反擊了！`;
+    feedbackTitle.className = "font-bold text-base text-rose-300";
+    document.getElementById('battle-log').textContent = `糟糕！受到 ${boss.name} 的反擊，仔細看看幾何解析再接再厲！`;
+  }
+
+  feedbackRationale.textContent = `【幾何解析】${q.rationale}`;
+
+  const nextBtn = document.getElementById('next-btn');
+  if (currentIdx === QUESTIONS.length - 1) {
+    nextBtn.textContent = "查看道館戰績 🏆";
+  } else if ((currentIdx + 1) % 5 === 0) {
+    nextBtn.textContent = `挑戰下一隻寶可夢：${BOSSES[q.bossIdx + 1].name} ⚔️`;
+  } else {
+    nextBtn.textContent = "下一題 ➡️";
+  }
+}
+
+function nextQuestion() {
+  if (currentIdx < QUESTIONS.length - 1) {
+    currentIdx++;
+    loadQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function showResults() {
+  document.getElementById('battle-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.remove('hidden');
+
+  document.getElementById('final-correct').textContent = `${correctCount} / 20`;
+  document.getElementById('final-score').textContent = score;
+
+  let rank = "見習訓練家";
+  let title = "道館挑戰完成！";
+  let subtitle = "你已經完成了 20 道圓心角與圓周角試煉，繼續練習就能成為幾何大師！";
+
+  if (correctCount === 20) {
+    rank = "傳說幾何大師";
+    title = "完美制霸！全勝奪得徽章！";
+    subtitle = "太神啦！20 題全對，道館館主的 4 隻王牌寶可夢完全被你的幾何實力折服！";
+  } else if (correctCount >= 16) {
+    rank = "道館冠軍級";
+    title = "道館挑戰大成功！";
+    subtitle = "表現非常出色！你成功擊敗了館主主力，順利獲得「幾何星辰徽章」！";
+  } else if (correctCount >= 12) {
+    rank = "菁英訓練家";
+    title = "通過道館試煉！";
+    subtitle = "不錯的表現！你已經掌握大部分圓與角的性質，再挑戰一次衝擊滿分吧！";
+  }
+
+  document.getElementById('final-rank').textContent = rank;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-subtitle').textContent = subtitle;
+}
+</script>
+</body>
+</html>
